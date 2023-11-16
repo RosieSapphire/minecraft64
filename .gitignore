@@ -1,0 +1,5 @@
+*.backup
+build/
+*.json
+filesystem/
+*.z64

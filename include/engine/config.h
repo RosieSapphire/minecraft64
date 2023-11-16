@@ -1,0 +1,17 @@
+#ifndef _ENGINE_CONFIG_H_
+#define _ENGINE_CONFIG_H_
+
+#define CONF_WIDTH 320
+#define CONF_HEIGHT 240
+#define CONF_ASPECT ((f32)CONF_WIDTH / (f32)CONF_HEIGHT)
+
+#define CONF_RESOLUTION ((resolution_t){CONF_WIDTH, CONF_HEIGHT, 0})
+#define CONF_DEPTH (DEPTH_32_BPP)
+#define CONF_NUM_BUFFERS (3)
+#define CONF_GAMMA (GAMMA_NONE)
+#define CONF_FILTER (FILTERS_RESAMPLE)
+
+#define CONF_NEAR 0.1f
+#define CONF_FAR 64
+
+#endif /* _ENGINE_CONFIG_H_ */
