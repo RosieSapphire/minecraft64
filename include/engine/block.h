@@ -1,7 +1,7 @@
 #ifndef _ENGINE_BLOCK_H_
 #define _ENGINE_BLOCK_H_
 
-#include "engine/types.h"
+#include "engine/vertex.h"
 #include "engine/camera.h"
 #include "engine/iparms.h"
 
@@ -33,9 +33,19 @@ struct block *block_by_pos(s32 x, s32 y, s32 z);
 void blocks_draw(f32 subtick, const struct camera *c);
 
 /*
- * Draw
+ * Build
  */
-void block_textures_load(void);
+u32 block_build_sides(struct vertex **vbuf, u16 **ibuf,
+			const struct block *b, u32 ind);
+u32 block_build_top(struct vertex **vbuf, u16 **ibuf,
+			const struct block *b, u32 ind);
+u32 block_build_bottom(struct vertex **vbuf, u16 **ibuf,
+			const struct block *b, u32 ind);
+
+/*
+ * Displaylist
+ */
+void block_dl_textures_load(void);
 void blocks_dl_build(void);
 
 #endif /* _ENGINE_BLOCK_H_ */

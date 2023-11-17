@@ -26,7 +26,7 @@ void blocks_init(void)
 		}
 	}
 
-	block_textures_load();
+	block_dl_textures_load();
 	blocks_dl_build();
 }
 
@@ -51,7 +51,7 @@ void blocks_update(struct camera *c, const struct input_parms iparms)
 
 	camera_get_focus_now(c, focus);
 	vector_sub(focus, c->eye, forw, 3);
-	vector3_cross(forw, (f32[3]){0, 1, 0}, side);
+	vector3_cross(forw, (f32[3]) {0, 1, 0}, side);
 	vector_scale(forw, move_forw * go_fast, 3);
 	vector_scale(side, move_side * go_fast, 3);
 
@@ -85,6 +85,7 @@ void blocks_draw(f32 subtick, const struct camera *c)
 			for (int x = 0; x < CHUNK_X; x++)
 			{
 				struct block *b = block_by_pos(x, y, z);
+
 				b->pos[0] = x;
 				b->pos[1] = y;
 				b->pos[2] = z;

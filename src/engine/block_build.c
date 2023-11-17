@@ -1,6 +1,5 @@
 #include <GL/gl.h>
 
-#include "engine/texture.h"
 #include "engine/vertex.h"
 #include "engine/block.h"
 
@@ -8,10 +7,6 @@ u32 blocks_dl;
 u8 blocks_dl_should_build = 1;
 
 static const u32 face_size = sizeof(struct vertex) * 4;
-
-static struct texture grass_side_tex;
-static struct texture grass_top_tex;
-static struct texture dirt_tex;
 
 static struct vertex verts_front[] = {
 	{{-0.5f, -0.5f,  0.5f}, {0, 1}, {0xFF, 0xFF, 0xFF, 0xFF}},
@@ -55,18 +50,11 @@ const struct vertex verts_bottom[] = {
 	{{ 0.5f, -0.5f, -0.5f}, {1, 0}, {0xFF, 0xFF, 0xFF, 0xFF}},
 };
 
-void block_textures_load(void)
-{
-	texture_create_file(&grass_side_tex, "rom:/grass_side.ci8.sprite");
-	texture_create_file(&grass_top_tex, "rom:/grass_top.i8.sprite");
-	texture_create_file(&dirt_tex, "rom:/dirt.ci8.sprite");
-}
-
 static u32 _block_build_face(const s32 *pos, struct vertex **v, u16 **i,
 			     const struct vertex *vw,
 			     const struct block *bcull, u32 ind)
 {
-	if(!(!bcull || (bcull && !(bcull->flags & BLOCK_IS_ACTIVE))))
+	if (!(!bcull || (bcull && !(bcull->flags & BLOCK_IS_ACTIVE))))
 		return (ind);
 
 	struct vertex vbase[4];
@@ -91,7 +79,7 @@ static u32 _block_build_face(const s32 *pos, struct vertex **v, u16 **i,
 
 }
 
-static u32 _block_build_sides(struct vertex **vbuf, u16 **ibuf,
+u32 block_build_sides(struct vertex **vbuf, u16 **ibuf,
 			const struct block *b, u32 ind)
 {
 	const s32 *p = b->pos;
@@ -108,7 +96,7 @@ static u32 _block_build_sides(struct vertex **vbuf, u16 **ibuf,
 	return (ind);
 }
 
-static u32 _block_build_top(struct vertex **vbuf, u16 **ibuf,
+u32 block_build_top(struct vertex **vbuf, u16 **ibuf,
 			const struct block *b, u32 ind)
 {
 	const s32 *p = b->pos;
@@ -119,7 +107,7 @@ static u32 _block_build_top(struct vertex **vbuf, u16 **ibuf,
 	return (ind);
 }
 
-static u32 _block_build_bottom(struct vertex **vbuf, u16 **ibuf,
+u32 block_build_bottom(struct vertex **vbuf, u16 **ibuf,
 			const struct block *b, u32 ind)
 {
 	const s32 *p = b->pos;
@@ -128,69 +116,4 @@ static u32 _block_build_bottom(struct vertex **vbuf, u16 **ibuf,
 	ind = _block_build_face(p, vbuf, ibuf, verts_bottom, below, ind);
 
 	return (ind);
-}
-
-static void _blocks_build_part(const struct vertex *vb, const u16 *ib,
-			       const u16 num_faces, const u32 tid)
-{
-	glVertexPointer(3, GL_FLOAT, sizeof(struct vertex), vb->pos);
-	glTexCoordPointer(2, GL_FLOAT, sizeof(struct vertex), vb->uv);
-	glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(struct vertex), vb->col);
-	glBindTexture(GL_TEXTURE_2D, tid);
-	glDrawElements(GL_TRIANGLES, num_faces * 6, GL_UNSIGNED_SHORT, ib);
-}
-
-void blocks_dl_build(void)
-{
-	struct vertex *vertbuff_sides = malloc(0);
-	struct vertex *vertbuff_top = malloc(0);
-	struct vertex *vertbuff_bottom = malloc(0);
-	u16 *indibuff_sides = malloc(0);
-	u16 *indibuff_top = malloc(0);
-	u16 *indibuff_bottom = malloc(0);
-	u32 num_faces_sides = 0, num_faces_top = 0, num_faces_bottom = 0;
-
-	for (int i = 0; i < CHUNK_Z * CHUNK_X * CHUNK_Y; i++)
-	{
-		const struct block *b = (const struct block *)blocks + i;
-
-		num_faces_sides = _block_build_sides(&vertbuff_sides,
-				&indibuff_sides, b, num_faces_sides);
-		num_faces_top = _block_build_top(&vertbuff_top,
-				&indibuff_top, b, num_faces_top);
-		num_faces_bottom = _block_build_bottom(&vertbuff_bottom,
-				&indibuff_bottom, b, num_faces_bottom);
-	}
-
-	blocks_dl = glGenLists(1);
-	glNewList(blocks_dl, GL_COMPILE);
-
-	glEnable(GL_TEXTURE_2D);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glEnableClientState(GL_COLOR_ARRAY);
-
-	_blocks_build_part(vertbuff_sides, indibuff_sides,
-		    num_faces_sides, grass_side_tex.id);
-	_blocks_build_part(vertbuff_top, indibuff_top,
-		    num_faces_top, grass_top_tex.id);
-	_blocks_build_part(vertbuff_bottom, indibuff_bottom,
-		    num_faces_bottom, dirt_tex.id);
-
-	glDisable(GL_TEXTURE_2D);
-
-	glDisableClientState(GL_COLOR_ARRAY);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-
-	glEndList();
-
-	free(vertbuff_sides);
-	free(vertbuff_top);
-	free(vertbuff_bottom);
-	free(indibuff_sides);
-	free(indibuff_top);
-	free(indibuff_bottom);
-
-	blocks_dl_should_build = 0;
 }

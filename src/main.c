@@ -21,8 +21,10 @@ static void _init(void)
 {
 	camera_init(&cam);
 
-	debug_init_isviewer();
-	debug_init_usblog();
+	/*
+	 * debug_init_isviewer();
+	 * debug_init_usblog();
+	 */
 	display_init(CONF_RESOLUTION, CONF_DEPTH,
 			CONF_NUM_BUFFERS, CONF_GAMMA, CONF_FILTER);
 	rdpq_init();
