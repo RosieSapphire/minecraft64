@@ -14,13 +14,9 @@
 static surface_t *color_buffer;
 static surface_t depth_buffer;
 static struct camera cam;
+static u32 ticks_last, ticks_now, ticks_delta, ticks_accum;
 
-/**
- * main - Main Function
- *
- * Return: 0 if Successful
- */
-int main(void)
+static void _init(void)
 {
 	camera_init(&cam);
 
@@ -49,29 +45,44 @@ int main(void)
 
 	depth_buffer = surface_alloc(FMT_RGBA16, CONF_WIDTH, CONF_HEIGHT);
 
-	u32 ticks_last, ticks_now, ticks_delta, ticks_accum;
+}
+
+static void _update(void)
+{
+	ticks_now = get_ticks();
+	ticks_delta = TICKS_DISTANCE(ticks_last, ticks_now);
+	ticks_last = ticks_now;
+	ticks_accum += ticks_delta;
+
+	while (ticks_accum >= DELTATICKS)
+	{
+		joypad_poll();
+
+		const struct input_parms iparms = {
+			joypad_get_buttons_pressed(JOYPAD_PORT_1),
+			joypad_get_buttons_held(JOYPAD_PORT_1),
+			joypad_get_inputs(JOYPAD_PORT_1),
+		};
+
+		blocks_update(&cam, iparms);
+		ticks_accum -= DELTATICKS;
+	}
+}
+
+/**
+ * main - Main Function
+ *
+ * Return: 0 if Successful
+ */
+int main(void)
+{
+	_init();
 
 	ticks_last = get_ticks();
 	ticks_accum = 0;
 	while (1)
 	{
-		ticks_now = get_ticks();
-		ticks_delta = TICKS_DISTANCE(ticks_last, ticks_now);
-		ticks_last = ticks_now;
-		ticks_accum += ticks_delta;
-		while (ticks_accum >= DELTATICKS)
-		{
-			joypad_poll();
-
-			const struct input_parms iparms = {
-				joypad_get_buttons_pressed(JOYPAD_PORT_1),
-				joypad_get_buttons_held(JOYPAD_PORT_1),
-				joypad_get_inputs(JOYPAD_PORT_1),
-			};
-
-			blocks_update(&cam, iparms);
-			ticks_accum -= DELTATICKS;
-		}
+		_update();
 
 		color_buffer = display_get();
 		rdpq_attach(color_buffer, &depth_buffer);

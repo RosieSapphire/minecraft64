@@ -13,34 +13,30 @@ static struct texture grass_side_tex;
 static struct texture grass_top_tex;
 static struct texture dirt_tex;
 
-static struct vertex verts_sides[] = {
-	/*
-	 * front
-	 */
+static const u32 face_size = sizeof(struct vertex) * 4;
+
+static struct vertex verts_front[] = {
 	{{-0.5f, -0.5f,  0.5f}, {0, 1}, {0xFF, 0xFF, 0xFF, 0xFF}},
 	{{ 0.5f, -0.5f,  0.5f}, {1, 1}, {0xFF, 0xFF, 0xFF, 0xFF}},
 	{{-0.5f,  0.5f,  0.5f}, {0, 0}, {0xFF, 0xFF, 0xFF, 0xFF}},
 	{{ 0.5f,  0.5f,  0.5f}, {1, 0}, {0xFF, 0xFF, 0xFF, 0xFF}},
+};
 
-	/*
-	 * back
-	 */
+static struct vertex verts_back[] = {
 	{{-0.5f, -0.5f, -0.5f}, {1, 1}, {0xFF, 0xFF, 0xFF, 0xFF}},
 	{{-0.5f,  0.5f, -0.5f}, {1, 0}, {0xFF, 0xFF, 0xFF, 0xFF}},
 	{{ 0.5f, -0.5f, -0.5f}, {0, 1}, {0xFF, 0xFF, 0xFF, 0xFF}},
 	{{ 0.5f,  0.5f, -0.5f}, {0, 0}, {0xFF, 0xFF, 0xFF, 0xFF}},
+};
 
-	/*
-	 * left
-	 */
+static struct vertex verts_left[] = {
 	{{-0.5f, -0.5f,  0.5f}, {1, 1}, {0xFF, 0xFF, 0xFF, 0xFF}},
 	{{-0.5f,  0.5f,  0.5f}, {1, 0}, {0xFF, 0xFF, 0xFF, 0xFF}},
 	{{-0.5f, -0.5f, -0.5f}, {0, 1}, {0xFF, 0xFF, 0xFF, 0xFF}},
 	{{-0.5f,  0.5f, -0.5f}, {0, 0}, {0xFF, 0xFF, 0xFF, 0xFF}},
+};
 
-	/*
-	 * right
-	 */
+static struct vertex verts_right[] = {
 	{{ 0.5f, -0.5f,  0.5f}, {0, 1}, {0xFF, 0xFF, 0xFF, 0xFF}},
 	{{ 0.5f, -0.5f, -0.5f}, {1, 1}, {0xFF, 0xFF, 0xFF, 0xFF}},
 	{{ 0.5f,  0.5f,  0.5f}, {0, 0}, {0xFF, 0xFF, 0xFF, 0xFF}},
@@ -59,17 +55,6 @@ const struct vertex verts_bottom[] = {
 	{{-0.5f, -0.5f, -0.5f}, {1, 1}, {0xFF, 0xFF, 0xFF, 0xFF}},
 	{{ 0.5f, -0.5f,  0.5f}, {0, 0}, {0xFF, 0xFF, 0xFF, 0xFF}},
 	{{ 0.5f, -0.5f, -0.5f}, {1, 0}, {0xFF, 0xFF, 0xFF, 0xFF}},
-};
-
-static u16 indis_sides[] = {
-	 0,  1,  2,  2,  1,  3,
-	 4,  5,  6,  6,  5,  7,
-	 8,  9, 10, 10,  9, 11,
-	12, 13, 14, 14, 13, 15,
-};
-
-static u16 indis_top_bottom[] = {
-	0, 1, 2, 2, 1, 3
 };
 
 void blocks_init(void)
@@ -110,18 +95,100 @@ void blocks_update(struct camera *c, const struct input_parms iparms)
 		(f32)(iparms.held.c_up - iparms.held.c_down) * 0.1f;
 	const f32 move_side =
 		(f32)(iparms.held.c_right - iparms.held.c_left) * 0.1f;
+	const u8 go_fast = iparms.held.z + 1;
 
 	camera_get_focus_now(c, focus);
 	vector_sub(focus, c->eye, forw, 3);
 	vector3_cross(forw, (f32[3]){0, 1, 0}, side);
-	vector_scale(forw, move_forw, 3);
-	vector_scale(side, move_side, 3);
+	vector_scale(forw, move_forw * go_fast, 3);
+	vector_scale(side, move_side * go_fast, 3);
 
 	vector_copy(c->eye_last, c->eye, 3);
 	vector_add(move, forw, move, 3);
 	vector_add(move, side, move, 3);
 	vector_normalize(move, 3);
 	vector_add(c->eye, move, c->eye, 3);
+
+	/*
+	 * sorting blocks
+	 */
+}
+
+/*
+static int _block_sort_func(const void *a, const void *b)
+{
+	const struct block *ab = (const struct block *)a;
+	const struct block *bb = (const struct block *)b;
+
+	return (ab->camdist - bb->camdist);
+}
+*/
+
+static struct block *_block_by_pos(s32 x, s32 y, s32 z)
+{
+	if (x >= CHUNK_X || y >= CHUNK_Y || z >= CHUNK_Z)
+		return (NULL);
+
+	if (x < 0 || y < 0 || z < 0)
+		return (NULL);
+
+	return (&blocks[x][y][z]);
+}
+
+static void _block_draw_face(const s32 *pos, struct vertex **v, u16 **i,
+			     const struct vertex *vw,
+			     const struct block *bcull, u32 *ind)
+{
+	if(!(!bcull || (bcull && !(bcull->flags & BLOCK_IS_ACTIVE))))
+		return;
+
+	struct vertex vbase[4];
+	u16 ibase[6] = {0, 1, 2, 2, 1, 3};
+
+	memcpy(vbase, vw, face_size);
+
+	for (u16 i = 0; i < 4; i++)
+		for (u16 j = 0; j < 3; j++)
+			vbase[i].pos[j] += pos[j];
+
+	for (u16 i = 0; i < 6; i++)
+		ibase[i] += 4 * (*ind);
+
+	*v = realloc(*v, face_size * (*ind + 1));
+	*i = realloc(*i, sizeof(u16) * 6 * (*ind + 1));
+	memcpy(*v + (*ind * 4), vbase, face_size);
+	memcpy(*i + (*ind * 6), ibase, sizeof(u16) * 6);
+	*ind += 1;
+
+}
+
+static void _block_draw(struct vertex **vbuf, u16 **ibuf,
+			const struct block *b, u32 *face_ind)
+{
+	const s32 *p = b->pos;
+	const struct block *infront = _block_by_pos(p[0], p[1], p[2] + 1);
+	const struct block *behind = _block_by_pos(p[0], p[1], p[2] - 1);
+	const struct block *toleft = _block_by_pos(p[0] - 1, p[1], p[2]);
+	const struct block *toright = _block_by_pos(p[0] + 1, p[1], p[2]);
+	const struct block *above = _block_by_pos(p[0], p[1] + 1, p[2]);
+	const struct block *below = _block_by_pos(p[0], p[1] - 1, p[2]);
+
+	/*
+	glPushMatrix();
+	glTranslatef(p[0], p[1], p[2]);
+	*/
+
+	_block_draw_face(p, vbuf, ibuf, verts_front, infront, face_ind);
+	_block_draw_face(p, vbuf, ibuf, verts_back, behind, face_ind);
+	_block_draw_face(p, vbuf, ibuf, verts_left, toleft, face_ind);
+	_block_draw_face(p, vbuf, ibuf, verts_right, toright, face_ind);
+	_block_draw_face(p, vbuf, ibuf, verts_top, above, face_ind);
+	_block_draw_face(p, vbuf, ibuf, verts_bottom, below, face_ind);
+
+	/*
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glPopMatrix();
+	*/
 }
 
 void blocks_draw(__attribute__((unused))f32 subtick, const struct camera *c)
@@ -134,7 +201,6 @@ void blocks_draw(__attribute__((unused))f32 subtick, const struct camera *c)
 	glLoadIdentity();
 
 	camera_view_matrix_setup(c, subtick);
-	glTranslatef(0, 0, -2);
 
 	glEnable(GL_TEXTURE_2D);
 
@@ -144,71 +210,48 @@ void blocks_draw(__attribute__((unused))f32 subtick, const struct camera *c)
 		{
 			for (int x = 0; x < CHUNK_X; x++)
 			{
-				/*
-				 * draw sides
-				 */
-				glVertexPointer(3, GL_FLOAT,
-		    			sizeof(struct vertex),
-					verts_sides->pos);
-				glTexCoordPointer(2, GL_FLOAT,
-		      			sizeof(struct vertex),
-					verts_sides->uv);
-				glColorPointer(4, GL_UNSIGNED_BYTE,
-		   			sizeof(struct vertex),
-					verts_sides->col);
+				struct block *b = &blocks[x][y][z];
+				f32 camvec[3];
 
-				glBindTexture(GL_TEXTURE_2D,
-					grass_side_tex.id);
-
-				glDrawElements(GL_TRIANGLES,
-		   			sizeof(indis_sides) /
-		   			sizeof(*indis_sides),
-					GL_UNSIGNED_SHORT, indis_sides);
-
-				/*
-	                         * draw top
-				 */
-				glVertexPointer(3, GL_FLOAT,
-		    			sizeof(struct vertex),
-					verts_top->pos);
-				glTexCoordPointer(2, GL_FLOAT,
-		      			sizeof(struct vertex),
-					verts_top->uv);
-				glColorPointer(4, GL_UNSIGNED_BYTE,
-		   			sizeof(struct vertex),
-					verts_top->col);
-
-				glBindTexture(GL_TEXTURE_2D, grass_top_tex.id);
-
-				glDrawElements(GL_TRIANGLES,
-		   			sizeof(indis_top_bottom) /
-		   			sizeof(*indis_top_bottom),
-					GL_UNSIGNED_SHORT, indis_top_bottom);
-
-				/*
-	                         * draw bottom
-				 */
-				glVertexPointer(3, GL_FLOAT,
-		    			sizeof(struct vertex),
-					verts_bottom->pos);
-				glTexCoordPointer(2, GL_FLOAT,
-		      			sizeof(struct vertex),
-					verts_bottom->uv);
-				glColorPointer(4, GL_UNSIGNED_BYTE,
-		   			sizeof(struct vertex),
-					verts_bottom->col);
-
-				glBindTexture(GL_TEXTURE_2D, dirt_tex.id);
-
-				glDrawElements(GL_TRIANGLES,
-		   			sizeof(indis_top_bottom) /
-		   			sizeof(*indis_top_bottom),
-					GL_UNSIGNED_SHORT, indis_top_bottom);
-
-				glBindTexture(GL_TEXTURE_2D, 0);
+				vector_sub(c->eye,
+	       				(f32[3]){x, y, z}, camvec, 3);
+				b->camdist = vector_magnitude_sqr(camvec, 3);
+				b->pos[0] = x;
+				b->pos[1] = y;
+				b->pos[2] = z;
 			}
 		}
 	}
+
+	/*
+	const u32 blocks_size =
+		sizeof(struct block) * CHUNK_X * CHUNK_Y * CHUNK_Z;
+	qsort(blocks_sorted, CHUNK_X * CHUNK_Y * CHUNK_Z,
+       		sizeof(struct block), _block_sort_func);
+	*/
+
+	struct vertex *vertbuff = malloc(0);
+	u16 *indibuff = malloc(0);
+	u32 num_faces = 0;
+
+	for (int i = 0; i < CHUNK_Z * CHUNK_X * CHUNK_Y; i++)
+	{
+		const struct block *b = (const struct block *)blocks + i;
+
+		_block_draw(&vertbuff, &indibuff, b, &num_faces);
+	}
+
+	glVertexPointer(3, GL_FLOAT, sizeof(struct vertex), vertbuff->pos);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(struct vertex), vertbuff->uv);
+	glColorPointer(4, GL_UNSIGNED_BYTE,
+		sizeof(struct vertex), vertbuff->col);
+	
+	glBindTexture(GL_TEXTURE_2D, grass_side_tex.id);
+	glDrawElements(GL_TRIANGLES, num_faces * 6,
+		GL_UNSIGNED_SHORT, indibuff);
+
+	free(vertbuff);
+	free(indibuff);
 
 	glDisable(GL_TEXTURE_2D);
 

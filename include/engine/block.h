@@ -5,9 +5,9 @@
 #include "engine/camera.h"
 #include "engine/iparms.h"
 
-#define CHUNK_X 1
-#define CHUNK_Y 1
-#define CHUNK_Z 1
+#define CHUNK_X 8
+#define CHUNK_Y 8
+#define CHUNK_Z 8
 
 enum block_flags : u8
 {
@@ -18,6 +18,7 @@ struct block
 {
 	s32 pos[3];
 	enum block_flags flags;
+	f32 camdist;
 };
 
 extern struct block chunk[CHUNK_X][CHUNK_Y][CHUNK_Z];
