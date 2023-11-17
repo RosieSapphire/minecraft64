@@ -130,6 +130,16 @@ static u32 _block_build_bottom(struct vertex **vbuf, u16 **ibuf,
 	return (ind);
 }
 
+static void _blocks_build_part(const struct vertex *vb, const u16 *ib,
+			       const u16 num_faces, const u32 tid)
+{
+	glVertexPointer(3, GL_FLOAT, sizeof(struct vertex), vb->pos);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(struct vertex), vb->uv);
+	glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(struct vertex), vb->col);
+	glBindTexture(GL_TEXTURE_2D, tid);
+	glDrawElements(GL_TRIANGLES, num_faces * 6, GL_UNSIGNED_SHORT, ib);
+}
+
 void blocks_dl_build(void)
 {
 	struct vertex *vertbuff_sides = malloc(0);
@@ -160,47 +170,12 @@ void blocks_dl_build(void)
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
 
-	/*
-	 * Sides
-	 */
-	glVertexPointer(3, GL_FLOAT,
-		 sizeof(struct vertex), vertbuff_sides->pos);
-	glTexCoordPointer(2, GL_FLOAT,
-		   sizeof(struct vertex), vertbuff_sides->uv);
-	glColorPointer(4, GL_UNSIGNED_BYTE,
-		sizeof(struct vertex), vertbuff_sides->col);
-
-	glBindTexture(GL_TEXTURE_2D, grass_side_tex.id);
-	glDrawElements(GL_TRIANGLES, num_faces_sides * 6,
-		GL_UNSIGNED_SHORT, indibuff_sides);
-
-	/*
-	 * Top
-	 */
-	glVertexPointer(3, GL_FLOAT,
-		 sizeof(struct vertex), vertbuff_top->pos);
-	glTexCoordPointer(2, GL_FLOAT,
-		   sizeof(struct vertex), vertbuff_top->uv);
-	glColorPointer(4, GL_UNSIGNED_BYTE,
-		sizeof(struct vertex), vertbuff_top->col);
-
-	glBindTexture(GL_TEXTURE_2D, grass_top_tex.id);
-	glDrawElements(GL_TRIANGLES, num_faces_top * 6,
-		GL_UNSIGNED_SHORT, indibuff_top);
-
-	/*
-	 * Bottom
-	 */
-	glVertexPointer(3, GL_FLOAT,
-		 sizeof(struct vertex), vertbuff_bottom->pos);
-	glTexCoordPointer(2, GL_FLOAT,
-		   sizeof(struct vertex), vertbuff_bottom->uv);
-	glColorPointer(4, GL_UNSIGNED_BYTE,
-		sizeof(struct vertex), vertbuff_bottom->col);
-
-	glBindTexture(GL_TEXTURE_2D, dirt_tex.id);
-	glDrawElements(GL_TRIANGLES, num_faces_bottom * 6,
-		GL_UNSIGNED_SHORT, indibuff_bottom);
+	_blocks_build_part(vertbuff_sides, indibuff_sides,
+		    num_faces_sides, grass_side_tex.id);
+	_blocks_build_part(vertbuff_top, indibuff_top,
+		    num_faces_top, grass_top_tex.id);
+	_blocks_build_part(vertbuff_bottom, indibuff_bottom,
+		    num_faces_bottom, dirt_tex.id);
 
 	glDisable(GL_TEXTURE_2D);
 
