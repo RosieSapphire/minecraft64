@@ -20,10 +20,22 @@ struct block
 	enum block_flags flags;
 };
 
-extern struct block chunk[CHUNK_X][CHUNK_Y][CHUNK_Z];
+extern struct block blocks[CHUNK_X][CHUNK_Y][CHUNK_Z];
+extern u32 blocks_dl;
+extern u8 blocks_dl_should_build;
 
+/*
+ * Main
+ */
 void blocks_init(void);
 void blocks_update(struct camera *c, const struct input_parms iparms);
-void blocks_draw(__attribute__((unused))f32 subtick, const struct camera *c);
+struct block *block_by_pos(s32 x, s32 y, s32 z);
+void blocks_draw(f32 subtick, const struct camera *c);
+
+/*
+ * Draw
+ */
+void block_textures_load(void);
+void blocks_dl_build(void);
 
 #endif /* _ENGINE_BLOCK_H_ */

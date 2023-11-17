@@ -6,6 +6,7 @@
 #define DELTATIME (1.0f / (f32)TICKRATE)
 #define DELTATICKS (DELTATIME * TICKS_PER_SECOND)
 
+#include "engine/profiler.h"
 #include "engine/block.h"
 #include "engine/config.h"
 #include "engine/camera.h"
@@ -82,7 +83,9 @@ int main(void)
 	ticks_accum = 0;
 	while (1)
 	{
+		profiler_begin("_update()");
 		_update();
+		profiler_end_print();
 
 		color_buffer = display_get();
 		rdpq_attach(color_buffer, &depth_buffer);
@@ -93,7 +96,9 @@ int main(void)
 
 		f32 subtick = (f32)ticks_accum / (f32)DELTATICKS;
 
+		profiler_begin("blocks_draw()");
 		blocks_draw(subtick, &cam);
+		profiler_end_print();
 
 		gl_context_end();
 		rdpq_detach_show();
