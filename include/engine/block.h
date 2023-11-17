@@ -18,7 +18,6 @@ struct block
 {
 	s32 pos[3];
 	enum block_flags flags;
-	f32 camdist;
 };
 
 extern struct block chunk[CHUNK_X][CHUNK_Y][CHUNK_Z];
