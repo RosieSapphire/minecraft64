@@ -5,6 +5,11 @@
 
 #include "engine/types.h"
 
+/**
+ * struct texture - Texture Structure
+ * @id: OpenGL Texture ID
+ * @spr: Libdragon Sprite Object
+ */
 struct texture
 {
 	u32 id;

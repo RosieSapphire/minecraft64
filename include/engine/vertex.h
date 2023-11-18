@@ -3,6 +3,12 @@
 
 #include "engine/types.h"
 
+/**
+ * struct vertex - Vertex Structure
+ * @pos: Position Component
+ * @uv: UV Component
+ * @col: Color Component
+ */
 struct vertex
 {
 	f32 pos[3];

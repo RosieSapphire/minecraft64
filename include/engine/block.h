@@ -9,11 +9,20 @@
 #define CHUNK_Y 8
 #define CHUNK_Z 8
 
-enum block_flags : u8
+/**
+ * enum block_flags - Block Flags Enum
+ * @BLOCK_IS_ACTIVE: Block is Active
+ */
+enum block_flags
 {
 	BLOCK_IS_ACTIVE = 0x1,
 };
 
+/**
+ * struct block - Block Structure
+ * @pos: Position
+ * @flags: Flags
+ */
 struct block
 {
 	s32 pos[3];

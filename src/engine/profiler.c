@@ -7,12 +7,19 @@
 u32 profile_start, profile_end;
 char profile_name[32];
 
+/**
+ * profiler_begin - Begins the Profiler on the code you want to profile
+ * @name: Name of function you're profiling
+ */
 void profiler_begin(const char *name)
 {
 	profile_start = get_ticks();
 	strncpy(profile_name, name, 31);
 }
 
+/**
+ * profiler_end_print - Ends the Profiler and prints out the time it took
+ */
 void profiler_end_print(void)
 {
 	u32 profile_delta;

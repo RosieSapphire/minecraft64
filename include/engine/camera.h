@@ -3,6 +3,13 @@
 
 #include "engine/types.h"
 
+/**
+ * struct camera - Camera Structure
+ * @eye_last: Eye Position Last
+ * @eye: Eye Position Now
+ * @angles_last: Angles Last
+ * @angles: Angles Now
+ */
 struct camera
 {
 	f32 eye_last[3], eye[3];

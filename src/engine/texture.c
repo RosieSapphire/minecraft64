@@ -3,6 +3,11 @@
 
 #include "engine/texture.h"
 
+/**
+ * texture_create_file - Creates Texture from File
+ * @t: Texture to Write to
+ * @path: Path to Read from
+ */
 void texture_create_file(struct texture *t, const char *path)
 {
 	glGenTextures(1, &t->id);

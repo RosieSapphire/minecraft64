@@ -17,6 +17,9 @@ static surface_t depth_buffer;
 static struct camera cam;
 static u32 ticks_last, ticks_now, ticks_delta, ticks_accum;
 
+/**
+ * _init - Initialization Function
+ */
 static void _init(void)
 {
 	camera_init(&cam);
@@ -50,6 +53,9 @@ static void _init(void)
 
 }
 
+/**
+ * _update - Update Function
+ */
 static void _update(void)
 {
 	ticks_now = get_ticks();

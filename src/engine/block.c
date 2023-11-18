@@ -10,6 +10,9 @@
 
 struct block blocks[CHUNK_X][CHUNK_Y][CHUNK_Z];
 
+/**
+ * blocks_init - Initializes Blocks
+ */
 void blocks_init(void)
 {
 	for (int z = 0; z < CHUNK_Z; z++)
@@ -30,6 +33,11 @@ void blocks_init(void)
 	blocks_dl_build();
 }
 
+/**
+ * blocks_update - Update Blocks
+ * @c: Camera
+ * @iparms: Input Parameteres
+ */
 void blocks_update(struct camera *c, const struct input_parms iparms)
 {
 	/*
@@ -65,6 +73,14 @@ void blocks_update(struct camera *c, const struct input_parms iparms)
 		blocks_dl_build();
 }
 
+/**
+ * block_by_pos - Returns a pointer to a block by position
+ * @x: X pos
+ * @y: Y pos
+ * @z: Z pos
+ *
+ * Return: Block found at Position
+ */
 struct block *block_by_pos(s32 x, s32 y, s32 z)
 {
 	if (x >= CHUNK_X || y >= CHUNK_Y || z >= CHUNK_Z)
@@ -76,6 +92,11 @@ struct block *block_by_pos(s32 x, s32 y, s32 z)
 	return (&blocks[x][y][z]);
 }
 
+/**
+ * blocks_draw - Draws everything related to the Block
+ * @subtick: Delta Between Frames
+ * @c: Camera
+ */
 void blocks_draw(f32 subtick, const struct camera *c)
 {
 	for (int z = 0; z < CHUNK_Z; z++)

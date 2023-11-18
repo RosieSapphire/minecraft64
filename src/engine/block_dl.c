@@ -1,5 +1,6 @@
 #include <GL/gl.h>
 
+#include "engine/vertex.h"
 #include "engine/texture.h"
 #include "engine/block.h"
 
@@ -7,6 +8,9 @@ static struct texture grass_side_tex;
 static struct texture grass_top_tex;
 static struct texture dirt_tex;
 
+/**
+ * block_dl_textures_load - Loads the Block Textures
+ */
 void block_dl_textures_load(void)
 {
 	texture_create_file(&grass_side_tex, "rom:/grass_side.ci8.sprite");
@@ -14,6 +18,13 @@ void block_dl_textures_load(void)
 	texture_create_file(&dirt_tex, "rom:/dirt.ci8.sprite");
 }
 
+/**
+ * _blocks_dl_draw_part - Draws a Consolidated Part of a Chunk
+ * @vb: Vertex Buffer
+ * @ib: Index Buffer
+ * @num_faces: Number of Faces
+ * @tid: OpenGL Texture ID
+ */
 static void _blocks_dl_draw_part(const struct vertex *vb, const u16 *ib,
 			       const u16 num_faces, const u32 tid)
 {
@@ -24,6 +35,21 @@ static void _blocks_dl_draw_part(const struct vertex *vb, const u16 *ib,
 	glDrawElements(GL_TRIANGLES, num_faces * 6, GL_UNSIGNED_SHORT, ib);
 }
 
+/**
+ * _blocks_dl_gen_gllist - Generates a Display List from Mesh Data
+ * @vbs: Vertex Buffer Sides
+ * @vbt: Vertex Buffer Top
+ * @vbb: Vertex Buffer Bottom
+ * @ibs: Index Buffer Sides
+ * @ibt: Index Buffer Top
+ * @ibb: Index Buffer Bottom
+ * @nfs: Number of Faces Sides
+ * @nft: Number of Faces Top
+ * @nfb: Number of Faces Bottom
+ * @ts: Texture Sides
+ * @tt: Texture Top
+ * @tb: Texture Bottom
+ */
 static void _blocks_dl_gen_gllist(struct vertex *vbs, struct vertex *vbt,
 				  struct vertex *vbb, u16 *ibs,
 				  u16 *ibt, u16 *ibb, u32 nfs, u32 nft,
@@ -50,6 +76,9 @@ static void _blocks_dl_gen_gllist(struct vertex *vbs, struct vertex *vbt,
 	glEndList();
 }
 
+/**
+ * blocks_dl_build - Builds the Display List for the entire Chunk
+ */
 void blocks_dl_build(void)
 {
 	struct vertex *vertbuff_sides = malloc(0);
